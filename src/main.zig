@@ -1,21 +1,17 @@
 const std = @import("std");
-const VulkanLoader = @import("vulkanloader.zig").VulkanLoader;
-const c = @import("c.zig");
-const vk = @import("vulkan");
+const window = @import("platform/window_glfw.zig");
+const Renderer = @import("renderer.zig").Renderer;
 
 pub fn main() !void {
-    var loader = try VulkanLoader.init();
-    defer loader.deinit();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
 
-    if (c.glfwInit() != c.GLFW_TRUE) return error.glfwInitFailed;
-    defer c.glfwTerminate();
+    try window.init(1280, 720, "test vulkan");
+    defer window.deinit();
 
-    c.glfwWindowHint(c.GLFW_CLIENT_API, c.GLFW_NO_API);
+    _ = try Renderer.init(allocator, try window.getWindow());
 
-    const window = c.glfwCreateWindow(800, 600, "Vulkan window", null, null) orelse return error.glfwWindowInitFailed;
-    defer c.glfwDestroyWindow(window);
-
-    while (c.glfwWindowShouldClose(window) == c.GLFW_FALSE) {
-        c.glfwPollEvents();
+    while (!window.windowClosed()) {
+        window.update();
     }
 }
